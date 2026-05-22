@@ -1,6 +1,3 @@
-Here is the code one last time. I have separated it into two parts so you can copy and paste them easily.
-### File 1: App.jsx
-Copy everything between the lines below:
 import React, { useState, useRef } from 'react';
 import { Play, Volume2 } from 'lucide-react';
 const RELEASES = [
