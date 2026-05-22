@@ -22,13 +22,14 @@
    </footer>
 
    <script>
+       // Mapping your Vimeo IDs to the release IDs
        const releases = [
-           { id: 'IMP-001', title: 'burden', date: '2026.05.22' },
-           { id: 'IMP-002', title: 'silence', date: '2026.05.22' },
-           { id: 'IMP-003', title: 'I’ve moved', date: '2026.05.22' },
-           { id: 'IMP-004', title: 'remember', date: '2026.05.22' },
-           { id: 'IMP-005', title: 'go on', date: '2026.05.22' },
-           { id: 'IMP-006', title: 'six more', date: '2026.05.22' },
+           { id: 'IMP-001', title: 'burden', date: '2026.05.22', vimeoId: '1194750717' },
+           { id: 'IMP-002', title: 'silence', date: '2026.05.22', vimeoId: '1194747890' },
+           { id: 'IMP-003', title: 'I’ve moved', date: '2026.05.22', vimeoId: '1194747889' },
+           { id: 'IMP-004', title: 'remember', date: '2026.05.22', vimeoId: '1194748140' },
+           { id: 'IMP-005', title: 'go on', date: '2026.05.22', vimeoId: '1194747887' },
+           { id: 'IMP-006', title: 'six more', date: '2026.05.22', vimeoId: '1194747888' },
        ];
 
        const container = document.getElementById('releases-container');
@@ -36,6 +37,7 @@
        releases.forEach(item => {
            const wrapper = document.createElement('div');
            wrapper.className = "flex flex-col mb-6";
+           // Note: We use the Vimeo player embed URL format for reliable playback
            wrapper.innerHTML = `
                <button onclick="toggleExpand('${item.id}')" class="flex flex-col items-start gap-0 group text-left py-1">
                    <span class="text-[10px] text-black/50 font-mono tracking-widest uppercase leading-none">${item.date}</span>
@@ -44,26 +46,15 @@
                <div id="container-${item.id}" class="grid transition-all duration-[600ms] ease-in-out grid-rows-[0fr]">
                    <div class="overflow-hidden">
                        <div class="pt-3">
-                           <div class="w-full aspect-video bg-black relative group overflow-hidden">
-                               <video id="video-${item.id}" class="w-full h-full object-cover cursor-pointer" playsinline onclick="togglePlay('${item.id}')" ontimeupdate="updateProgress('${item.id}')">
-                                   <source src="${item.id}.mp4" type="video/mp4">
-                               </video>
-                               <div id="play-overlay-${item.id}" class="absolute inset-0 flex items-center justify-center bg-black/20 pointer-events-none">
-                                   <svg width="48" height="48" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="1"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                               </div>
-                               
-                               <button onclick="toggleMute('${item.id}', event)" class="absolute bottom-3 right-3 z-30 text-white p-1 hover:opacity-70 transition-opacity">
-                                   <div class="relative w-[16px] h-[16px] flex items-center justify-center">
-                                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5L6 9H2V15H6L11 19V5Z"></path><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
-                                       <div id="mute-x-${item.id}" class="absolute inset-0 hidden items-center justify-center">
-                                           <div class="w-[12px] h-[1.5px] bg-white rotate-45 absolute"></div>
-                                       </div>
-                                   </div>
-                               </button>
-
-                               <div id="timeline-${item.id}" class="absolute bottom-0 left-0 w-full h-[3px] bg-white/30 z-20 cursor-pointer" onclick="seek('${item.id}', event)">
-                                   <div id="progress-${item.id}" class="h-full bg-white w-0 pointer-events-none"></div>
-                               </div>
+                           <div class="w-full aspect-video bg-black relative">
+                               <iframe
+                                   id="video-${item.id}"
+                                   src="https://player.vimeo.com/video/${item.vimeoId}?autoplay=0&muted=0"
+                                   class="w-full h-full"
+                                   frameborder="0"
+                                   allow="autoplay; fullscreen; picture-in-picture"
+                                   allowfullscreen>
+                               </iframe>
                            </div>
                        </div>
                    </div>
@@ -75,61 +66,14 @@
        function toggleExpand(id) {
            const container = document.getElementById('container-' + id);
            const title = document.getElementById('title-' + id);
-           const video = document.getElementById('video-' + id);
-           const overlay = document.getElementById('play-overlay-' + id);
            
            if (container.classList.contains('grid-rows-[0fr]')) {
                container.classList.replace('grid-rows-[0fr]', 'grid-rows-[1fr]');
                title.classList.add('text-black', 'underline');
-               video.play();
-               overlay.classList.add('hidden');
            } else {
                container.classList.replace('grid-rows-[1fr]', 'grid-rows-[0fr]');
                title.classList.remove('text-black', 'underline');
-               video.pause();
-               overlay.classList.remove('hidden');
            }
-       }
-
-       function togglePlay(id) {
-           const video = document.getElementById('video-' + id);
-           const overlay = document.getElementById('play-overlay-' + id);
-           if (video.paused) {
-               video.play();
-               overlay.classList.add('hidden');
-           } else {
-               video.pause();
-               overlay.classList.remove('hidden');
-           }
-       }
-
-       function updateProgress(id) {
-           const video = document.getElementById('video-' + id);
-           const bar = document.getElementById('progress-' + id);
-           if (video && video.duration) {
-               const percent = (video.currentTime / video.duration) * 100;
-               bar.style.width = percent + '%';
-           }
-       }
-
-       function seek(id, event) {
-           event.stopPropagation();
-           const video = document.getElementById('video-' + id);
-           const timeline = document.getElementById('timeline-' + id);
-           const rect = timeline.getBoundingClientRect();
-           const x = event.clientX - rect.left;
-           const percent = x / rect.width;
-           video.currentTime = percent * video.duration;
-           document.getElementById('progress-' + id).style.width = (percent * 100) + '%';
-       }
-
-       function toggleMute(id, event) {
-           event.stopPropagation();
-           const video = document.getElementById('video-' + id);
-           const muteX = document.getElementById('mute-x-' + id);
-           video.muted = !video.muted;
-           muteX.classList.toggle('hidden', !video.muted);
-           muteX.classList.toggle('flex', video.muted);
        }
    </script>
 </body>
